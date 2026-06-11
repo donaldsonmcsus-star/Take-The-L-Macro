@@ -329,10 +329,16 @@ class WaveCanvas(tk.Canvas):
         self._w = 800
         self._h = 650
         self.bind("<Configure>", lambda e: setattr(self, '_w', e.width) or setattr(self, '_h', e.height))
-        self._tick()
+        self.after(100, self._tick)
 
     def _tick(self):
         if not self._alive:
+            return
+        try:
+            self.winfo_exists()
+        except Exception:
+            return
+        if not self.winfo_exists():
             return
         self._t += 0.016
         self.delete("wave")
