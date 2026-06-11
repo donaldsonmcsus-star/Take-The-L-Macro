@@ -263,7 +263,7 @@ class TakeTheLMacroApp(tk.Tk):
         hdr.pack(fill="x", padx=22, pady=(16, 0))
 
         # Logo "L" shape drawn in canvas next to title
-        logo_canvas = tk.Canvas(hdr, width=32, height=36, bg=BG,
+        logo_canvas = tk.Canvas(hdr, width=42, height=44, bg=BG,
                                 highlightthickness=0)
         logo_canvas.pack(side="left", padx=(0, 10))
         self._draw_logo(logo_canvas)
@@ -340,18 +340,52 @@ class TakeTheLMacroApp(tk.Tk):
         self._build_log_tab(log_frame)
 
     def _draw_logo(self, canvas):
-        """Draw a simplified 'L' shape mimicking the logo gradient."""
-        colors = [PINK, VIOLET, BLUE]
-        # Vertical bar of the L
-        for i, y in enumerate(range(0, 24, 8)):
-            t = i / 3
-            c = hex_lerp(PINK, BLUE, t)
-            canvas.create_rectangle(0, y, 10, y+8, fill=c, outline="")
-        # Horizontal bar of the L
-        for i, x in enumerate(range(0, 32, 8)):
-            t = 0.6 + i * 0.1
-            c = hex_lerp(VIOLET, BLUE, min(t - 0.6, 1))
-            canvas.create_rectangle(x, 24, x+8, 34, fill=c, outline="")
+        """Draw the L-shape logo matching the pink→violet→blue gradient icon."""
+        # Canvas is 42x44
+        # The logo is a hollow L: thick outer left vertical + bottom horizontal
+        # with rounded caps, pink at top fading to blue at bottom-right
+        W, H = 42, 44
+        T = 10   # stroke thickness
+        G = 4    # gap (hollow inner offset)
+
+        def grad_rects_v(x1, x2, y1, y2, c1, c2, steps=20):
+            sh = (y2 - y1) / steps
+            for i in range(steps):
+                t = i / steps
+                c = hex_lerp(c1, c2, t)
+                canvas.create_rectangle(x1, y1 + i*sh, x2, y1 + (i+1)*sh + 1,
+                                        fill=c, outline="")
+
+        def grad_rects_h(x1, x2, y1, y2, c1, c2, steps=20):
+            sw = (x2 - x1) / steps
+            for i in range(steps):
+                t = i / steps
+                c = hex_lerp(c1, c2, t)
+                canvas.create_rectangle(x1 + i*sw, y1, x1 + (i+1)*sw + 1, y2,
+                                        fill=c, outline="")
+
+        # --- Outer left vertical bar (full height, pink→violet) ---
+        grad_rects_v(0, T, 0, H, PINK, VIOLET)
+
+        # --- Hollow cutout on inner vertical (BG color strip) ---
+        grad_rects_v(G, T - G, G, H - T - G, PINK, VIOLET)
+        # overdraw with bg
+        canvas.create_rectangle(G, G, T - G, H - T - G, fill=BG, outline="")
+
+        # --- Inner right vertical bar (offset, violet→blue, shorter) ---
+        mid_x = T + 4
+        grad_rects_v(mid_x, mid_x + T, 8, H - T, VIOLET, BLUE)
+        # hollow it
+        canvas.create_rectangle(mid_x + G, 8 + G, mid_x + T - G, H - T - G,
+                                fill=BG, outline="")
+
+        # --- Bottom horizontal bar (violet→blue) ---
+        grad_rects_h(0, W, H - T, H, VIOLET, BLUE)
+
+        # --- Arrow tip at bottom right (small triangle pointing right-down) ---
+        tip_colors = [hex_lerp(VIOLET, BLUE, 0.7 + i*0.1) for i in range(3)]
+        canvas.create_polygon(W-10, H-T-2, W, H-T-2, W, H-2,
+                              fill=BLUE, outline="")
 
     def _build_routes_tab(self, parent):
         # Default webhook card
@@ -574,4 +608,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main()    
