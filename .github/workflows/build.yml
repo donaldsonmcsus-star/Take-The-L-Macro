@@ -1,0 +1,28 @@
+name: Build TakeTheLMacro
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install PyInstaller
+        run: python -m pip install pyinstaller
+
+      - name: Build exe
+        run: python -m PyInstaller --onefile --windowed --name "TakeTheLMacro" router.py
+
+      - name: Upload exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: TakeTheLMacro
+          path: dist/TakeTheLMacro.exe
